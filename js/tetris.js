@@ -1,7 +1,8 @@
 import BLOCKS from "./blocks.js";
 
 const playground = document.querySelector('.playground > ul');
-
+const gameOver = document.querySelector('.gameover');
+const scoreDisplay = document.querySelector('.score');
 
 //Game Setting 
 const Game_Rows = 20;
@@ -10,16 +11,15 @@ const Game_Cols = 10;
 //변수
 
 let score = 0,
-	TimeToFall = 500,
+	fallingSpeed = 500,
 	downInterval,
 	tempMovingItem;
 
 const movingItem = {
-		//떨어지는 블록의 정보
-		type: 'T_BLOCKS',
+		type: '',
 		direction: 0,
 		top: 0,
-		left: 0,
+		left: 4,
 	};
 
 
@@ -31,13 +31,13 @@ const init = () => {
 	tempMovingItem = {...movingItem};
 
 	for(let i = 0; i < Game_Rows; i++) {
-		addtetrisBox();
+		addtetrisline();
 	}
-	renderBlocks();
+	BlockGenerator();
 
 }
 
-const addtetrisBox = () => {
+const addtetrisline = () => {
 	const li = document.createElement('li');
 	const ul = document.createElement('ul');
 	for(let j = 0; j < Game_Cols; j++) {
@@ -49,7 +49,7 @@ const addtetrisBox = () => {
 	playground.prepend(li);
 }
 
-const renderBlocks = () => {
+const renderBlocks = (BLOCK_type) => {
 	const {type, direction, top, left} = tempMovingItem;
 	//arr Destructuring을 사용하여 하나하나의 값에 접근하지 말고 변수처럼 배열값을 사용한다.
 	const movedBLOCK = document.querySelectorAll('.movedBLOCK');
@@ -58,16 +58,96 @@ const renderBlocks = () => {
 		item.classList.remove(type, "movedBLOCK")
 	})
 
-	BLOCKS[type][direction].forEach(BLOCK => {
+	BLOCKS[type][direction].some(BLOCK => {
 		const x = BLOCK[0] + left;
 		const y = BLOCK[1] + top;
 
-		const BLOCK_target = playground.childNodes[y].childNodes[0].childNodes[x];
+		const BLOCK_target = playground.childNodes[y] ? playground.childNodes[y].childNodes[0].childNodes[x] : null;
 		//childNodes에 접근하면 자식요소를 배열로 나타내어 set()이나 foreach등으로 접근할 수 있다.
 		//콘솔에 찍을 때 일반 괄호로는 안되고 ({})로 접근해야하는듯?
-		BLOCK_target.classList.add(type, "movedBLOCK");
+
+		const isAvailable = checkEmpty(BLOCK_target);
+
+		if(isAvailable) {
+			BLOCK_target.classList.add(type, "movedBLOCK");
+		} else {
+			tempMovingItem = { ...movingItem };
+			setTimeout(() => {
+				renderBlocks('retry');
+
+				if(BLOCK_type === "top") {
+					fixedBlock();
+				}
+			}, 0);
+
+			return true;
+		}
+
 
 	});
+
+	movingItem.left = left;
+	movingItem.top = top;
+	movingItem.direction = direction;
+}
+
+const fixedBlock = () => {
+	const movingBlocks = document.querySelectorAll('.movedBLOCK');
+	movingBlocks.forEach(item => {
+		item.classList.remove('movedBLOCK');
+		item.classList.add('fixed')
+	});
+	clearBlock();
+	// BlockGenerator();
+}
+
+const clearBlock = () => {
+
+	const childNodes = playground.childNodes;
+	childNodes.forEach(item => {
+		let clear = true;
+		item.children[0].childNodes.forEach(li => {
+			if(!li.classList.contains('fixed')) {
+				clear = false
+			};
+		});
+		if(clear) {
+			item.remove();
+			addtetrisline();
+		}
+		// console.log(item.children[0].childNodes)
+	})
+
+
+	BlockGenerator()
+}
+
+const BlockGenerator = () => {
+	clearInterval(downInterval);
+
+	downInterval = setInterval(() => {
+		moveBlock('top', 1)
+	}, fallingSpeed)
+
+
+
+	const BLOCKS_arr = Object.entries(BLOCKS);
+	const randomBlockIndex = Math.floor(Math.random() * BLOCKS_arr.length);
+
+
+	movingItem.type = BLOCKS_arr[randomBlockIndex][0];
+	movingItem.top = 0;
+	movingItem.left = 3;
+	movingItem.direction = 0;
+	tempMovingItem = {...movingItem};
+	renderBlocks();
+}
+
+const checkEmpty = (target) => {
+	if(!target || target.classList.contains('fixed')) {
+		return false
+	}
+	return true;
 }
 
 
@@ -75,15 +155,25 @@ const Rotation = () => {
 	const direction = tempMovingItem.direction;
 	direction === 3 ? tempMovingItem.direction = 0 : tempMovingItem.direction  += 1;
 	renderBlocks();
-	console.log(tempMovingItem.top)
-	console.log(tempMovingItem.left)
+
 }
 
 const moveBlock = (BLOCK_type, amount) => {
 	tempMovingItem[BLOCK_type] += amount;
-	renderBlocks();
-	console.log(tempMovingItem.top)
-	console.log(tempMovingItem.left)
+	renderBlocks(BLOCK_type);
+
+}
+
+const DropBlock = () => {
+	clearInterval(downInterval);
+
+	downInterval = setInterval(() => {
+		moveBlock('top', 1);
+	}, 10);
+}
+
+const GameOver = () => {
+	gameOver.style.display = 'none';
 }
 
 init();
@@ -102,5 +192,7 @@ document.addEventListener('keydown', e => {
 		case 40:
 			moveBlock('top', 1);
 			break;
+		case 32:
+			DropBlock();
 	}
 })
