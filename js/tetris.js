@@ -5,9 +5,7 @@ const gameOver = document.querySelector('.gameover');
 const scoreDisplay = document.querySelector('.score');
 const RestartBtn = document.querySelector('.gameover > button');
 
-//Game Setting 
-const Game_Rows = 20;
-const Game_Cols = 10;
+
 
 //변수
 
@@ -21,12 +19,15 @@ const movingItem = {
 		direction: 0,
 		top: 0,
 		left: 4,
-	};
+};
 
-
+//Game Setting 
+const Game_Rows = 20;
+const Game_Cols = 10;
 
 
 //함수
+
 const init = () => {
 	//떨어지는 블록의 초기 정보를 저장하여 활용함.
 	tempMovingItem = {...movingItem};
@@ -122,6 +123,11 @@ const clearBlock = () => {
 			addtetrisline();
 			score++;
 			scoreDisplay.innerHTML = score;
+			
+			//난이도 조절
+			if(score % 10 === 0 && score !== 0) {
+				fallingSpeed = fallingSpeed / 1.5;
+			}
 		}
 		// console.log(item.children[0].childNodes)
 	})
@@ -130,11 +136,14 @@ const clearBlock = () => {
 	BlockGenerator()
 }
 
+
 const BlockGenerator = () => {
 	clearInterval(downInterval);
 
+
 	downInterval = setInterval(() => {
-		moveBlock('top', 1)
+		moveBlock('top', 1);
+
 	}, fallingSpeed)
 
 
@@ -172,6 +181,7 @@ const moveBlock = (BLOCK_type, amount) => {
 
 }
 
+//스페이스바를 누를 때 실행
 const DropBlock = () => {
 	clearInterval(downInterval);
 
