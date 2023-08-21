@@ -3,6 +3,7 @@ import BLOCKS from "./blocks.js";
 const playground = document.querySelector('.playground > ul');
 const gameOver = document.querySelector('.gameover');
 const scoreDisplay = document.querySelector('.score');
+const RestartBtn = document.querySelector('.gameover > button');
 
 //Game Setting 
 const Game_Rows = 20;
@@ -72,6 +73,11 @@ const renderBlocks = (BLOCK_type) => {
 			BLOCK_target.classList.add(type, "movedBLOCK");
 		} else {
 			tempMovingItem = { ...movingItem };
+			if(BLOCK_type ==='retry'){
+				clearInterval(downInterval);
+				GameOver();
+			}
+
 			setTimeout(() => {
 				renderBlocks('retry');
 
@@ -114,6 +120,8 @@ const clearBlock = () => {
 		if(clear) {
 			item.remove();
 			addtetrisline();
+			score++;
+			scoreDisplay.innerHTML = score;
 		}
 		// console.log(item.children[0].childNodes)
 	})
@@ -173,11 +181,13 @@ const DropBlock = () => {
 }
 
 const GameOver = () => {
-	gameOver.style.display = 'none';
+	gameOver.style.display = 'flex';
 }
 
 init();
 
+
+//EventListener
 document.addEventListener('keydown', e => {
 	switch(e.keyCode) {
 		case 37:
@@ -195,4 +205,10 @@ document.addEventListener('keydown', e => {
 		case 32:
 			DropBlock();
 	}
-})
+});
+
+RestartBtn.addEventListener('click', () => {
+	playground.innerHTML = '';
+	gameOver.style.display = 'none';
+	init();
+});
